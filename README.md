@@ -3,6 +3,13 @@ This repo contains demonstration R code for adding population data to an arbitra
 
 This code sample does this first with Census tracts, to test the method and show that it works. And then there is code for doing the same thing with a hex grid. Any geography could be used though.
 
+## Resources
+* Download Census tracts for your state here:
+	* https://www.census.gov/cgi-bin/geo/shapefiles/index.php?year=2020&layergroup=Census+Tracts
+* Look up NYS county id numbers here:
+	* https://www2.census.gov/geo/docs/reference/codes2020/cou/st36_ny_cou2020.txt
+* Get Census tract population data for the year 2020 for Kings, Queens, Bronx, New York, and Richmond counties. This will be table S0101 from the 2020 ACS 5-year estimates:
+	* https://data.census.gov/table?g=050XX00US36005$1400000,36047$1400000,36061$1400000,36081$1400000,36085$1400000&y=2020
 
 
 
