@@ -10,15 +10,18 @@ This code sample does this first with Census tracts, to test the method and show
 	* https://www2.census.gov/geo/docs/reference/codes2020/cou/st36_ny_cou2020.txt
 * Get Census tract population data for the year 2020 for Kings, Queens, Bronx, New York, and Richmond counties. This will be table S0101 from the 2020 ACS 5-year estimates:
 	* https://data.census.gov/table?g=050XX00US36005$1400000,36047$1400000,36061$1400000,36081$1400000,36085$1400000&y=2020
+* Get WorldPop raster population data set:
+	* 100m United States Constrained (meaning, just towns and cities) 2020
+	* https://hub.worldpop.org/geodata/summary?id=49727
 
 
 
 ## With ESRI tools:
 You might want to do the same thing in ArcMap/ArcGIS rather than R. Without getting into details, here's the basic steps:
-1. In Arcmap/arcgis, add your polygon geography layer. 
+1. In Arcmap/arcgis, add your polygon geography layer.
 2. Add the worldpop raster population data layer.
 3. Use "Zonal Statistics as Table" tool from toolbox. The only stat you need is Sum.
-4. This creates a table, which you need to join back to your geography layer. 
+4. This creates a table, which you need to join back to your geography layer.
 5. Export your layer that now contains a population column to save it.
 
 
