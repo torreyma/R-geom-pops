@@ -1,5 +1,5 @@
 # Census-tract-population-test.R
-# Last modified: 2024-08-15 10:56
+# Last modified: 2024-08-15 17:11
 # Use a raster of population information to calculate populations of Census tract -- check against Census tract populations as listed by the Census. NYC is used for example.
 
 
@@ -85,7 +85,11 @@ NYC_ct.sf <- sf::st_read("./data/NYC_ct.shp", stringsAsFactors = F, quiet=T)
 # merge pop data and MOE to geometry data frame:
 NYC_ct.sf <- merge(NYC_ct.sf, NYC_ct_pop, by.x = "GEOID", by.y = "GEOID2")
 
-## Write out the NYC counties shapefile, now with pop:
+# Convert Cenus pop and MOE columnts to numeric:
+NYC_ct.sf$CTPOP <- as.numeric(NYC_ct.sf$CTPOP)
+NYC_ct.sf$CTPOPMOE <- as.numeric(NYC_ct.sf$CTPOPMOE)
+
+## Write out the NYC counties shapefile, now with Census pop and MOE:
 st_write(NYC_ct.sf, "./data/NYC_ct.shp")
 	# (./data/ assumes you ran this file from the github repo directory)
 	# (Expect this to throw an error if the layer already exists)
@@ -125,8 +129,22 @@ extracted_pop <- round(extract(NYC_rast_pop, NYC_ct.sf, fun='sum', na.rm = TRUE)
 # (This will warn that nyc_grid.sf is in a different CRS than the raster, but it works fine)
 NYC_ct.sf$RASTRPOP <- extracted_pop$"usa_ppp_2020_constrained"
 
-########## Compare raster-based population to population from Census
-NYC_ct_nogeo <- st_drop_geometry(NYC_ct.sf)
+## Write out the NYC counties shapefile, now with raster pop:
+st_write(NYC_ct.sf, "./data/NYC_ct.shp")
+	# (./data/ assumes you ran this file from the github repo directory)
+	# (Expect this to throw an error if the layer already exists)
 
+########## Compare raster-based population to population from Census
+## This section compares the raster-derived population with the Census population to see if it is within the Census' margin of error.
+
+# Load our Census tract geometry data:
+NYC_ct.sf <- sf::st_read("./data/NYC_ct.shp", stringsAsFactors = F, quiet=T)
+
+# Calculate boolean column showing if raster pop is within the MOE of the Census pop:
+NYC_ct.sf$WITHINMOE <- ifelse((((NYC_ct.sf$CTPOP + NYC_ct.sf$CTPOPMOE) >= NYC_ct.sf$RASTRPOP)  & 
+			       ((NYC_ct.sf$CTPOP - NYC_ct.sf$CTPOPMOE) <= NYC_ct.sf$RASTRPOP))
+			      , TRUE, FALSE)
+
+# NYC_ct_nogeo <- st_drop_geometry(NYC_ct.sf)
 
 
