@@ -1,5 +1,5 @@
 # Census-tract-population-test.R
-# Last modified: 2024-08-14 16:34
+# Last modified: 2024-08-15 10:56
 # Use a raster of population information to calculate populations of Census tract -- check against Census tract populations as listed by the Census. NYC is used for example.
 
 
@@ -100,7 +100,6 @@ st_write(NYC_ct.sf, "./data/NYC_ct.shp")
 # Load the full US pop raster data (geotiff):
 US_rast_pop <- rast("~/Downloads/usa_ppp_2020_constrained.tif")
 
-
 # Load our Census tract geometry data:
 NYC_ct.sf <- sf::st_read("./data/NYC_ct.shp", stringsAsFactors = F, quiet=T)
 
@@ -111,6 +110,23 @@ NYC_rast_pop <- crop(US_rast_pop, NYC_ct.sf)
 writeRaster(NYC_rast_pop, "./data/NYC_ppp_2020_constrained.tif")
 
 
+########## Calculate population for Census tracts from raster data
+
+# Load worldpop raster data:
+NYC_rast_pop <- rast("./data/NYC_ppp_2020_constrained.tif")
+
+# Load our Census tract geometry data:
+NYC_ct.sf <- sf::st_read("./data/NYC_ct.shp", stringsAsFactors = F, quiet=T)
+
+# Calculate the population using terra package's extract() function:
+extracted_pop <- round(extract(NYC_rast_pop, NYC_ct.sf, fun='sum', na.rm = TRUE))
+
+# add the pop column back to NYC_grid.sf:
+# (This will warn that nyc_grid.sf is in a different CRS than the raster, but it works fine)
+NYC_ct.sf$RASTRPOP <- extracted_pop$"usa_ppp_2020_constrained"
+
+########## Compare raster-based population to population from Census
+NYC_ct_nogeo <- st_drop_geometry(NYC_ct.sf)
 
 
 
