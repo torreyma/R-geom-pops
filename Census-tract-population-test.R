@@ -1,5 +1,5 @@
 # Census-tract-population-test.R
-# Last modified: 2024-08-16 14:11
+# Last modified: 2024-08-16 17:28
 ## This R code uses a raster of population information to calculate populations of Census tract 
 ## -- check against Census tract populations as listed by the Census. NYC is used for example.
 ## NOTE: This code has already been run for NYC and the results saved in the git repo data/ folder. 
@@ -96,6 +96,10 @@ NYC_ct.sf <- merge(NYC_ct.sf, NYC_ct_pop, by.x = "GEOID", by.y = "GEOID2")
 NYC_ct.sf$CTPOP <- as.numeric(NYC_ct.sf$CTPOP)
 NYC_ct.sf$CTPOPMOE <- as.numeric(NYC_ct.sf$CTPOPMOE)
 
+# Let's drop rows where the Census population is 0, 
+# since those should be places the Census thinks there's no population (graveyards, parks, water, etc):
+NYC_ct.sf <- NYC_ct.sf[NYC_ct.sf$"CTPOP" != 0, ]
+
 ## Write out the NYC counties shapefile, now with Census pop and MOE:
 st_write(NYC_ct.sf, "./data/NYC_ct.shp")
 	# (./data/ assumes you ran this file from the github repo directory)
@@ -159,5 +163,7 @@ NYC_ct.sf$WITHINMOE <- ifelse((((NYC_ct.sf$CTPOP + NYC_ct.sf$CTPOPMOE) >= NYC_ct
 
 # Show the percentange rows that are TRUE for having a raster-calculated population within the MOE of the Census population:
 round(sum(NYC_ct.sf$WITHINMOE) / (nrow(NYC_ct.sf)) * 100)
+# Result: 79% accurate. But that's just by MOE. For most of the FALSEs, the Census pop is still pretty close to the raster pop, even if the difference falls outside the MOE. (TODO: Should show this in numbers.)
+
 
 
