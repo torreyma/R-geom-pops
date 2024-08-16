@@ -1,15 +1,21 @@
 # Census-tract-population-test.R
-# Last modified: 2024-08-15 17:11
-# Use a raster of population information to calculate populations of Census tract -- check against Census tract populations as listed by the Census. NYC is used for example.
+# Last modified: 2024-08-16 14:11
+## This R code uses a raster of population information to calculate populations of Census tract 
+## -- check against Census tract populations as listed by the Census. NYC is used for example.
+## NOTE: This code has already been run for NYC and the results saved in the git repo data/ folder. 
+## You only need to modify and run this code if you want to run it for a region other than NYC.
+## You may also want to modify and run the raster section of this code if you want to do a hexgrid/custom geography of a different region.
+## As such, this code is really intended to be run line-by-line with modifications as necessary.
 
 
 library(sf) # tools for dataframes with geometries
 library(terra) # tools for geo raster
 
 ########## Census tracts geography
-## In this section you download the Census tracts geography for New York State, and the code extracts just the Census tracts for NYC. You can skip this section if you are working in NYC, since the extracted tracts are included in the data/ folder of the git repo.
+## In this section you download the Census tracts geography for New York State, and the code extracts just the Census tracts for NYC. 
 
-## First, in your web broswer, download Census tracts geography files for your state from the Census. We will use the 2020 Census tracts because that is the year our population raster data will be:
+## First, in your web broswer, download Census tracts geography files for your state from the Census. 
+## We will use the 2020 Census tracts because that is the year our population raster data will be:
 	# https://www.census.gov/cgi-bin/geo/shapefiles/index.php?year=2020&layergroup=Census+Tracts
 	# Save the downloaded file somwhere that makes sense.
 
@@ -51,9 +57,10 @@ rm(NYC_ct.sf)
 
 
 ########## Census tracts population data
-## In this section you download the Census population data, and the code attaches it to our NYC Census tracts. You can skip this section if you are working in NYC, since the extracted tracts are included in the data/ folder of the git repo.
+## In this section you download the Census population data, and the code attaches it to our NYC Census tracts.
 
-## First, in your web browser, download Census population data for the year 2020 for Kings, Queens, Bronx, New York, and Richmond counties. This will be table S0101 from the 2020 ACS 5-year estimates:
+## First, in your web browser, download Census population data for the year 2020 for Kings, Queens, Bronx, New York, and Richmond counties. 
+## This will be table S0101 from the 2020 ACS 5-year estimates:
 	# https://data.census.gov/table?g=050XX00US36005$1400000,36047$1400000,36061$1400000,36081$1400000,36085$1400000&y=2020
 
 ## Unzip the downloaded file:
@@ -96,7 +103,9 @@ st_write(NYC_ct.sf, "./data/NYC_ct.shp")
 
 
 ########## WorldPop raster population data
-## In this section you download the raster population data from WorldPop. That file is large (500mb), so the code here will crop it with the NYC geography and save that much-smaller just-NYC area of the raster. You can skip this section if you are working in NYC, since the extracted raster data are included in the data/ folder of the git repo.
+## In this section you download the raster population data from WorldPop. 
+## That file is large (500mb), so the code here will crop it with the NYC geography and save that much-smaller just-NYC area of the raster. 
+## NOTE: You need this raster file to run the hexgrid/custom geography analysis.
 
 ## First, in your web browser, download the 100m United States Constrained 2020 population raster data set:
 	# https://hub.worldpop.org/geodata/summary?id=49727
@@ -115,6 +124,8 @@ writeRaster(NYC_rast_pop, "./data/NYC_ppp_2020_constrained.tif")
 
 
 ########## Calculate population for Census tracts from raster data
+## This section is the main work everthing else in the code has been prep for.
+## It uses the raster file we cropped above to calculat and add a population row to our Census tracts file.
 
 # Load worldpop raster data:
 NYC_rast_pop <- rast("./data/NYC_ppp_2020_constrained.tif")
@@ -135,7 +146,8 @@ st_write(NYC_ct.sf, "./data/NYC_ct.shp")
 	# (Expect this to throw an error if the layer already exists)
 
 ########## Compare raster-based population to population from Census
-## This section compares the raster-derived population with the Census population to see if it is within the Census' margin of error.
+## This section checks our work by comparing the raster-derived population with the Census 
+## population to see if it is within the Census' margin of error.
 
 # Load our Census tract geometry data:
 NYC_ct.sf <- sf::st_read("./data/NYC_ct.shp", stringsAsFactors = F, quiet=T)
@@ -145,6 +157,7 @@ NYC_ct.sf$WITHINMOE <- ifelse((((NYC_ct.sf$CTPOP + NYC_ct.sf$CTPOPMOE) >= NYC_ct
 			       ((NYC_ct.sf$CTPOP - NYC_ct.sf$CTPOPMOE) <= NYC_ct.sf$RASTRPOP))
 			      , TRUE, FALSE)
 
-# NYC_ct_nogeo <- st_drop_geometry(NYC_ct.sf)
+# Show the percentange rows that are TRUE for having a raster-calculated population within the MOE of the Census population:
+round(sum(NYC_ct.sf$WITHINMOE) / (nrow(NYC_ct.sf)) * 100)
 
 
