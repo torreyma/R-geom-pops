@@ -1,7 +1,23 @@
 # R-geom-pops
-This repo contains demonstration R code for adding population data to an arbitrary geography. Say you have created a grid across your study area of a particular size that is meaningful to you. But you realize that the data you have should be normalized by population (that is, per-capita). So you need the population of each of your grids. You can find this by using publicly available population data in raster form. (At least down to a certain size.)
+This repo contains demonstration R code for adding population data to an
+arbitrary geography. Say you have created a grid across your study area of a
+particular size that is meaningful to you. But you realize that the data you
+have should be normalized by population (that is, per-capita). So you need the
+population of each of your grids. You can find this by using publicly available
+population data in raster form. (At least down to a certain size.)
 
-This code sample does this first with Census tracts, to test the method and show that it works. And then there is code for doing the same thing with a hex grid. Any geography could be used though.
+This code sample does this first with Census tracts, to test the method and
+show that it works. And then there is code for doing the same thing with a hex
+grid. Any geography could be used though.
+
+See comments in the code for instructions.
+
+## Files
+* Census-tract-population-test.R
+    * Demonstrates how to compare Census population per Census tract to the estimate of the Census tract population from the raster data. Then checks the accuracy.
+* hex-grid-population-count.R
+    * Creates a hex grid across the NYC geography (using the Census tract geography already download for convenience), and then adds population to the hexes using the raster population data.
+
 
 ## Resources
 * Download Census tracts for your state here:
@@ -13,7 +29,6 @@ This code sample does this first with Census tracts, to test the method and show
 * Get WorldPop raster population data set:
 	* 100m United States Constrained (meaning, just towns and cities) 2020
 	* https://hub.worldpop.org/geodata/summary?id=49727
-
 
 
 ## With ESRI tools:
