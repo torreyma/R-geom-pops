@@ -1,5 +1,5 @@
 # Census-tract-population-test.R
-# Last modified: 2024-08-16 17:28
+# Last modified: 2024-08-20 10:41
 ## This R code uses a raster of population information to calculate populations of Census tract 
 ## -- check against Census tract populations as listed by the Census. NYC is used for example.
 ## NOTE: This code has already been run for NYC and the results saved in the git repo data/ folder. 
@@ -17,13 +17,13 @@ library(terra) # tools for geo raster
 ## First, in your web broswer, download Census tracts geography files for your state from the Census. 
 ## We will use the 2020 Census tracts because that is the year our population raster data will be:
 	# https://www.census.gov/cgi-bin/geo/shapefiles/index.php?year=2020&layergroup=Census+Tracts
-	# Save the downloaded file somwhere that makes sense.
+	# Save the downloaded file in your ~/Downloads directory
 
 ## Unzip the downloaded file:
-unzip("~/Downloads/tl_2020_36_tract.zip", exdir = "~/Downloads")
+unzip(file.path(Sys.getenv("HOME"), "Downloads", "tl_2020_36_tract.zip"), exdir = file.path(Sys.getenv("HOME"), "Downloads"))
 
 # Load the shape file with the sf library. This file includes Census tracts for all of New York State:
-NYS_ct.sf <- sf::st_read("~/Downloads/tl_2020_36_tract.shp", stringsAsFactors = F, quiet=T)
+NYS_ct.sf <- sf::st_read(file.path(Sys.getenv("HOME"), "Downloads", "tl_2020_36_tract.shp"), stringsAsFactors = F, quiet=T)
 
 # This shapefile includes county ids, so we can use that to extract NYC.
 # Subset just the NYC counties. You can look up the NYC countyfp ids here:
@@ -47,7 +47,7 @@ NYC_ct.sf <- NYC_ct.sf[, c("COUNTYFP",
                            "geometry")]
 
 # Write out the NYC counties shapefile:
-st_write(NYC_ct.sf, "./data/NYC_ct.shp")
+st_write(NYC_ct.sf, file.path("data", "NYC_ct.shp"))
 	# (./data/ assumes you ran this file from the github repo directory)
 	# (Expect this to throw an error if the layer already exists)
 
@@ -63,10 +63,12 @@ rm(NYC_ct.sf)
 ## This will be table S0101 from the 2020 ACS 5-year estimates:
 	# https://data.census.gov/table?g=050XX00US36005$1400000,36047$1400000,36061$1400000,36081$1400000,36085$1400000&y=2020
 
-## Unzip the downloaded file:
-unzip("~/Downloads/ACSST5Y2020.S0101_2024-08-13T155613.zip", exdir = "~/Downloads")
+## Unzip the downloaded file (NOTE: you will have to modify this filename to match your downloaded file):
+unzip(file.path(Sys.getenv("HOME"), "Downloads", "ACSST5Y2020.S0101_2024-08-19T165950.zip"), exdir = file.path(Sys.getenv("HOME"), "Downloads"))
+	# Or, if you want to just manually edit your path, uncomment this instead:
+	#unzip("~/Downloads/ACSST5Y2020.S0101_2024-08-19T165950.zip", exdir = "~/Downloads")
 # Read in the population data csv:
-NYC_ct_pop <- read.csv("~/Downloads/ACSST5Y2020.S0101-Data.csv")
+NYC_ct_pop <- read.csv(file.path(Sys.getenv("HOME"), "Downloads", "ACSST5Y2020.S0101-Data.csv"))
 
 # We only need the total population column and it's MOE, so let's drop everything else:
 NYC_ct_pop <- NYC_ct_pop[, c("GEO_ID",
@@ -87,7 +89,7 @@ NYC_ct_pop <- cbind(NYC_ct_pop, strcapture("(.*)US(.*)", as.character(NYC_ct_pop
 NYC_ct_pop <- subset(NYC_ct_pop, select = -c(GEOID, GEOID1))
 
 # Load our Census tract geometry data:
-NYC_ct.sf <- sf::st_read("./data/NYC_ct.shp", stringsAsFactors = F, quiet=T)
+NYC_ct.sf <- sf::st_read(file.path("data", "NYC_ct.shp"), stringsAsFactors = F, quiet=T)
 
 # merge pop data and MOE to geometry data frame:
 NYC_ct.sf <- merge(NYC_ct.sf, NYC_ct_pop, by.x = "GEOID", by.y = "GEOID2")
@@ -96,12 +98,8 @@ NYC_ct.sf <- merge(NYC_ct.sf, NYC_ct_pop, by.x = "GEOID", by.y = "GEOID2")
 NYC_ct.sf$CTPOP <- as.numeric(NYC_ct.sf$CTPOP)
 NYC_ct.sf$CTPOPMOE <- as.numeric(NYC_ct.sf$CTPOPMOE)
 
-# Let's drop rows where the Census population is 0, 
-# since those should be places the Census thinks there's no population (graveyards, parks, water, etc):
-NYC_ct.sf <- NYC_ct.sf[NYC_ct.sf$"CTPOP" != 0, ]
-
 ## Write out the NYC counties shapefile, now with Census pop and MOE:
-st_write(NYC_ct.sf, "./data/NYC_ct.shp")
+st_write(NYC_ct.sf, file.path("data", "NYC_ct.shp"))
 	# (./data/ assumes you ran this file from the github repo directory)
 	# (Expect this to throw an error if the layer already exists)
 
@@ -115,16 +113,16 @@ st_write(NYC_ct.sf, "./data/NYC_ct.shp")
 	# https://hub.worldpop.org/geodata/summary?id=49727
 
 # Load the full US pop raster data (geotiff):
-US_rast_pop <- rast("~/Downloads/usa_ppp_2020_constrained.tif")
+US_rast_pop <- rast(file.path(Sys.getenv("HOME"), "Downloads", "usa_ppp_2020_constrained.tif"))
 
 # Load our Census tract geometry data:
-NYC_ct.sf <- sf::st_read("./data/NYC_ct.shp", stringsAsFactors = F, quiet=T)
+NYC_ct.sf <- sf::st_read(file.path("data", "NYC_ct.shp"), stringsAsFactors = F, quiet=T)
 
 # Crop the US pop raster with the NYC geography (using the terra package's crop):
 NYC_rast_pop <- crop(US_rast_pop, NYC_ct.sf)
 
 # Write NYC raster to the git repo data/ dir with terra's writeRaster:
-writeRaster(NYC_rast_pop, "./data/NYC_ppp_2020_constrained.tif")
+writeRaster(NYC_rast_pop, file.path("data", "NYC_ppp_2020_constrained.tif"))
 
 
 ########## Calculate population for Census tracts from raster data
@@ -132,10 +130,10 @@ writeRaster(NYC_rast_pop, "./data/NYC_ppp_2020_constrained.tif")
 ## It uses the raster file we cropped above to calculat and add a population row to our Census tracts file.
 
 # Load worldpop raster data:
-NYC_rast_pop <- rast("./data/NYC_ppp_2020_constrained.tif")
+NYC_rast_pop <- rast(file.path("data", "NYC_ppp_2020_constrained.tif"))
 
 # Load our Census tract geometry data:
-NYC_ct.sf <- sf::st_read("./data/NYC_ct.shp", stringsAsFactors = F, quiet=T)
+NYC_ct.sf <- sf::st_read(file.path("data", "NYC_ct.shp"), stringsAsFactors = F, quiet=T)
 
 # Calculate the population using terra package's extract() function:
 extracted_pop <- round(extract(NYC_rast_pop, NYC_ct.sf, fun='sum', na.rm = TRUE))
@@ -145,7 +143,7 @@ extracted_pop <- round(extract(NYC_rast_pop, NYC_ct.sf, fun='sum', na.rm = TRUE)
 NYC_ct.sf$RASTRPOP <- extracted_pop$"usa_ppp_2020_constrained"
 
 ## Write out the NYC counties shapefile, now with raster pop:
-st_write(NYC_ct.sf, "./data/NYC_ct.shp")
+st_write(NYC_ct.sf, file.path("data", "NYC_ct.shp"))
 	# (./data/ assumes you ran this file from the github repo directory)
 	# (Expect this to throw an error if the layer already exists)
 
@@ -154,7 +152,7 @@ st_write(NYC_ct.sf, "./data/NYC_ct.shp")
 ## population to see if it is within the Census' margin of error.
 
 # Load our Census tract geometry data:
-NYC_ct.sf <- sf::st_read("./data/NYC_ct.shp", stringsAsFactors = F, quiet=T)
+NYC_ct.sf <- sf::st_read(file.path("data", "NYC_ct.shp"), stringsAsFactors = F, quiet=T)
 
 # Calculate boolean column showing if raster pop is within the MOE of the Census pop:
 NYC_ct.sf$WITHINMOE <- ifelse((((NYC_ct.sf$CTPOP + NYC_ct.sf$CTPOPMOE) >= NYC_ct.sf$RASTRPOP)  & 
@@ -163,7 +161,7 @@ NYC_ct.sf$WITHINMOE <- ifelse((((NYC_ct.sf$CTPOP + NYC_ct.sf$CTPOPMOE) >= NYC_ct
 
 # Show the percentange rows that are TRUE for having a raster-calculated population within the MOE of the Census population:
 round(sum(NYC_ct.sf$WITHINMOE) / (nrow(NYC_ct.sf)) * 100)
-# Result: 79% accurate. But that's just by MOE. For most of the FALSEs, the Census pop is still pretty close to the raster pop, even if the difference falls outside the MOE. (TODO: Should show this in numbers.)
+# Result: 78% accurate.  TODO: update this line
 
 
 
